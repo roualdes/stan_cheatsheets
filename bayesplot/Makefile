@@ -10,23 +10,17 @@
 all:pdf  # default rule DO NOT EDIT
 ################################################################################
 MAINFILE  := main
-RNWFILES  :=
-RFILES    :=
 TEXFILES  :=
 CACHEDIR  := cache
 FIGUREDIR := figures
-LATEXMK_FLAGS :=
 ##### Explicit Dependencies #####
 ################################################################################
 RNWTEX = $(RNWFILES:.Rnw=.tex)
-ROUTFILES = $(RFILES:.R=.Rout)
-RDATAFILES = $(RFILES:.R=.Rdata)
 MAINTEX = $(MAINFILE:=.tex)
 MAINPDF = $(MAINFILE:=.pdf)
 ALLTEX = $(MAINTEX) $(RNWTEX) $(TEXFILES)
 
 # Dependencies
-$(RNWTEX): $(RDATAFILES)
 $(MAINTEX): $(RNWTEX) $(TEXFILES)
 $(MAINPDF): $(MAINTEX) $(ALLTEX)
 
@@ -47,12 +41,6 @@ $(FIGUREDIR):
 	  -e "knitr::opts_chunk[['set']](cache.path='$(CACHEDIR)/$*-')" \
 	  -e "knitr::knit('$<','$@')"
 
-%.R: %.Rnw
-	Rscript -e "Sweave('$^', driver=Rtangle())"
-
-%.Rout: %.R
-	R CMD BATCH "$^" "$@"
-
 %.pdf: %.tex
 	latexmk -pdf $<
 
@@ -65,7 +53,6 @@ clean:
 	-rm -f *.vrb
 	-rm -f *.nav
 	-rm -f *.bbl
-	# -rm *tikzDictionary
 
 clearcache:
 	-rm -rf $(CACHEDIR)
@@ -75,11 +62,3 @@ cleanall: clean clearcache
 
 open:
 	open -a Skim $(MAINPDF)
-
-handout: pdf
-	gsed 's/documentclass/documentclass[handout]/' main.tex >main_handout.tex
-	latexmk -pdf main_handout.tex
-
-copy: handout
-	cpy $(CURDIR)/$(MAINPDF)
-	cpy $(CURDIR)/$(MAINFILE)_handout.pdf
