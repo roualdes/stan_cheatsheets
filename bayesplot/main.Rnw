@@ -1,0 +1,148 @@
+\documentclass[final,9pt,fleqn]{beamer}
+\input{BeamOptions.tex}
+
+\setbeamertemplate{footline}{\hfill {\footnotesize \href{https://creativecommons.org/licenses/by-sa/4.0/}{CC BY-SA 4.0} $\circ$ Edward A. Roualdes $\circ$ \href{https://roualdes.us}{roualdes.us} $\circ$ version $0.0.1$ $\circ$ updated: \today} \hspace {0.1in} \vspace{0.1in}}
+
+\begin{document}
+
+
+<<setup, include=FALSE>>=
+options(replace.assign=TRUE, width=50, digits=4)
+opts_knit[["set"]](progress=FALSE)
+library("bayesplot")
+library("rstanarm")
+library("ggplot2")
+library("rstan")
+library("dplyr")
+@
+
+<<include=FALSE, cache=TRUE>>=
+model <- stan_glm(mpg ~ ., data=mtcars, chains=4)
+posterior <- as.matrix(model)
+@
+
+\begin{frame}[fragile]
+  \frametitle{ \underline{ {\fontsize{35}{38} \selectfont Bayesplot ::} {\fontsize{25}{28} \textbf{CHEAT SHEET}} }}
+\vspace{-0.25in}
+  \begin{columns}
+    \begin{column}{0.03\paperwidth} % left margin space
+    \end{column}
+
+    \begin{column}{0.3\paperwidth}
+\vspace{0.1in}
+<<eval=FALSE>>=
+library("bayesplot")
+library("rstanarm")
+library("ggplot2")
+library("rstan")
+library("dplyr")
+@
+
+\begin{block}{{\huge rstanarm}}
+
+  To showcase \texttt{bayesplot}, we'll fit linear regression using \texttt{rstanarm::stan\_glm} and use this model throughout.
+<<eval=FALSE>>=
+model <- stan_glmer(mpg ~ .,
+                    data=mtcars, chains=4)
+posterior <- as.matrix(model)
+@
+
+Chances are good you're most interested in the posterior distributions for select parameters.
+<<fig.width=3, fig.height=2>>=
+plot_title <- ggtitle("Posterior distributions",
+                      "medians and 80% intervals")
+mcmc_areas(posterior,
+           pars = c("drat", "am", "wt"),
+           prob = 0.8) + plot_title
+@
+
+Diagnosing convergence with traceplots is simple.
+<<fig.width=5, fig.height=1.5>>=
+mcmc_trace(posterior, pars=c("sigma", "wt"))
+@
+
+The pairs plot is helpful in determining if you have any highly correlated parameters, but necessitates us extracting the \texttt{stanfit} object from out \texttt{stanreg} model.
+
+<<fig.width=4, fig.height=3>>=
+posterior_chains <- rstan::extract(model$stanfit,
+                                   inc_warmup = TRUE,
+                                   permuted = FALSE)
+pairs <- posterior_chains %>%
+    mcmc_pairs(pars = c("(Intercept)", "wt", "sigma"))
+@
+\end{block}
+\end{column}
+
+
+\begin{column}{.03\paperwidth}
+\end{column}
+
+
+\begin{column}{0.3\paperwidth}
+
+<<echo=FALSE, fig.width=5, fig.height=3>>=
+pairs
+@
+
+Check how well the model covers your data with draws from the posterior predictive density.
+<<fig.width=3, fig.height=2>>=
+model %>%
+    posterior_predict(draws = 50) %>%
+    ppc_dens_overlay(y = model$y,
+                     yrep = .)
+@
+
+<<fig.width=5, fig.height=2>>=
+model %>%
+    posterior_predict(draws = 500) %>%
+    ppc_stat_grouped(y = mtcars$mpg,  group = mtcars$am,
+                     stat = "median", binwidth=0.5)
+@
+
+\begin{block}{{\huge RStan}}
+  Of course, \texttt{bayesplot} plays nicely with \texttt{RStan}, too.  We'll just pretend like we fit a model with \texttt{rstan::sampling} by extracting the \texttt{stanfit} object from out \texttt{stanreg} model.  This allows you to visualize individual chains.
+\end{block}
+\end{column}
+
+
+\begin{column}{.03\paperwidth}
+\end{column}
+
+
+\begin{column}{0.3\paperwidth}
+
+
+<<fig.width=5, fig.height=1.5>>=
+fargs <- list(ncol = 2,
+                   labeller = label_parsed)
+pars <- c("(Intercept)", "sigma")
+mcmc_trace(posterior_chains, pars = pars,
+           n_warmup = 300,
+           facet_args = fargs)
+@
+
+
+
+\begin{block}{{\huge Diagnostics}}
+  Bayesplot makes it easy to check diagnostics specific to the NUTS sampling method that \texttt{rstanarm} uses by default.
+
+<<fig.width=3, fig.height=1.5>>=
+mcmc_scatter(
+  as.matrix(model$stanfit),
+  pars = c("wt", "sigma"),
+  np = nuts_params(model$stanfit))
+@
+
+<<fig.width=5, fig.height=2.5>>=
+np <- nuts_params(model$stanfit)
+mcmc_nuts_energy(np, binwidth=1) +
+    ggtitle("NUTS Energy Diagnostic")
+@
+
+\end{block}
+\end{column}
+
+\end{columns}
+\end{frame}
+
+\end{document}

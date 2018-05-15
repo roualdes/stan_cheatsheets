@@ -1,0 +1,243 @@
+\documentclass[final,9pt,fleqn]{beamer}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\input{BeamOptions.tex}
+
+\setbeamertemplate{footline}{\hfill {\footnotesize \href{https://creativecommons.org/licenses/by-sa/4.0/}{CC BY-SA 4.0} $\circ$ Edward A. Roualdes $\circ$ \href{https://roualdes.us}{roualdes.us} $\circ$ version $0.0.1$ $\circ$ updated: \today} \hspace {0.1in} \vspace{0.1in}}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+
+
+
+
+
+\begin{frame}[fragile]
+  \frametitle{ \underline{ {\fontsize{35}{38} \selectfont Bayesplot ::} {\fontsize{25}{28} \textbf{CHEAT SHEET}} }}
+\vspace{-0.25in}
+  \begin{columns}
+    \begin{column}{0.03\paperwidth} % left margin space
+    \end{column}
+
+    \begin{column}{0.3\paperwidth}
+\vspace{0.1in}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(}\hlstr{"bayesplot"}\hlstd{)}
+\hlkwd{library}\hlstd{(}\hlstr{"rstanarm"}\hlstd{)}
+\hlkwd{library}\hlstd{(}\hlstr{"ggplot2"}\hlstd{)}
+\hlkwd{library}\hlstd{(}\hlstr{"rstan"}\hlstd{)}
+\hlkwd{library}\hlstd{(}\hlstr{"dplyr"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\begin{block}{{\huge rstanarm}}
+
+  To showcase \texttt{bayesplot}, we'll fit linear regression using \texttt{rstanarm::stan\_glm} and use this model throughout.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{model} \hlkwb{<-} \hlkwd{stan_glmer}\hlstd{(mpg} \hlopt{~} \hlstd{.,}
+                    \hlkwc{data}\hlstd{=mtcars,} \hlkwc{chains}\hlstd{=}\hlnum{4}\hlstd{)}
+\hlstd{posterior} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(model)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Chances are good you're most interested in the posterior distributions for select parameters.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{plot_title} \hlkwb{<-} \hlkwd{ggtitle}\hlstd{(}\hlstr{"Posterior distributions"}\hlstd{,}
+                      \hlstr{"medians and 80% intervals"}\hlstd{)}
+\hlkwd{mcmc_areas}\hlstd{(posterior,}
+           \hlkwc{pars} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"drat"}\hlstd{,} \hlstr{"am"}\hlstd{,} \hlstr{"wt"}\hlstd{),}
+           \hlkwc{prob} \hlstd{=} \hlnum{0.8}\hlstd{)} \hlopt{+} \hlstd{plot_title}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-4-1} 
+
+\end{knitrout}
+
+Diagnosing convergence with traceplots is simple.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{mcmc_trace}\hlstd{(posterior,} \hlkwc{pars}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"sigma"}\hlstd{,} \hlstr{"wt"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-5-1} 
+
+\end{knitrout}
+
+The pairs plot is helpful in determining if you have any highly correlated parameters, but necessitates us extracting the \texttt{stanfit} object from out \texttt{stanreg} model.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{posterior_chains} \hlkwb{<-} \hlstd{rstan}\hlopt{::}\hlkwd{extract}\hlstd{(model}\hlopt{$}\hlstd{stanfit,}
+                                   \hlkwc{inc_warmup} \hlstd{=} \hlnum{TRUE}\hlstd{,}
+                                   \hlkwc{permuted} \hlstd{=} \hlnum{FALSE}\hlstd{)}
+\hlstd{pairs} \hlkwb{<-} \hlstd{posterior_chains} \hlopt{%>%}
+    \hlkwd{mcmc_pairs}\hlstd{(}\hlkwc{pars} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"(Intercept)"}\hlstd{,} \hlstr{"wt"}\hlstd{,} \hlstr{"sigma"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+\end{block}
+\end{column}
+
+
+\begin{column}{.03\paperwidth}
+\end{column}
+
+
+\begin{column}{0.3\paperwidth}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-7-1} 
+
+\end{knitrout}
+
+Check how well the model covers your data with draws from the posterior predictive density.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{model} \hlopt{%>%}
+    \hlkwd{posterior_predict}\hlstd{(}\hlkwc{draws} \hlstd{=} \hlnum{50}\hlstd{)} \hlopt{%>%}
+    \hlkwd{ppc_dens_overlay}\hlstd{(}\hlkwc{y} \hlstd{= model}\hlopt{$}\hlstd{y,}
+                     \hlkwc{yrep} \hlstd{= .)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-8-1} 
+
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{model} \hlopt{%>%}
+    \hlkwd{posterior_predict}\hlstd{(}\hlkwc{draws} \hlstd{=} \hlnum{500}\hlstd{)} \hlopt{%>%}
+    \hlkwd{ppc_stat_grouped}\hlstd{(}\hlkwc{y} \hlstd{= mtcars}\hlopt{$}\hlstd{mpg,}  \hlkwc{group} \hlstd{= mtcars}\hlopt{$}\hlstd{am,}
+                     \hlkwc{stat} \hlstd{=} \hlstr{"median"}\hlstd{,} \hlkwc{binwidth}\hlstd{=}\hlnum{0.5}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-9-1} 
+
+\end{knitrout}
+
+\begin{block}{{\huge RStan}}
+  Of course, \texttt{bayesplot} plays nicely with \texttt{RStan}, too.  We'll just pretend like we fit a model with \texttt{rstan::sampling} by extracting the \texttt{stanfit} object from out \texttt{stanreg} model.  This allows you to visualize individual chains.
+\end{block}
+\end{column}
+
+
+\begin{column}{.03\paperwidth}
+\end{column}
+
+
+\begin{column}{0.3\paperwidth}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{fargs} \hlkwb{<-} \hlkwd{list}\hlstd{(}\hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,}
+                   \hlkwc{labeller} \hlstd{= label_parsed)}
+\hlstd{pars} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"(Intercept)"}\hlstd{,} \hlstr{"sigma"}\hlstd{)}
+\hlkwd{mcmc_trace}\hlstd{(posterior_chains,} \hlkwc{pars} \hlstd{= pars,}
+           \hlkwc{n_warmup} \hlstd{=} \hlnum{300}\hlstd{,}
+           \hlkwc{facet_args} \hlstd{= fargs)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-10-1} 
+
+\end{knitrout}
+
+
+
+\begin{block}{{\huge Diagnostics}}
+  Bayesplot makes it easy to check diagnostics specific to the NUTS sampling method that \texttt{rstanarm} uses by default.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{mcmc_scatter}\hlstd{(}
+  \hlkwd{as.matrix}\hlstd{(model}\hlopt{$}\hlstd{stanfit),}
+  \hlkwc{pars} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"wt"}\hlstd{,} \hlstr{"sigma"}\hlstd{),}
+  \hlkwc{np} \hlstd{=} \hlkwd{nuts_params}\hlstd{(model}\hlopt{$}\hlstd{stanfit))}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-11-1} 
+
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{np} \hlkwb{<-} \hlkwd{nuts_params}\hlstd{(model}\hlopt{$}\hlstd{stanfit)}
+\hlkwd{mcmc_nuts_energy}\hlstd{(np,} \hlkwc{binwidth}\hlstd{=}\hlnum{1}\hlstd{)} \hlopt{+}
+    \hlkwd{ggtitle}\hlstd{(}\hlstr{"NUTS Energy Diagnostic"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-12-1} 
+
+\end{knitrout}
+
+\end{block}
+\end{column}
+
+\end{columns}
+\end{frame}
+
+\end{document}
