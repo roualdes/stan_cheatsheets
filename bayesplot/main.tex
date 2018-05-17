@@ -64,7 +64,7 @@
   \frametitle{ \underline{ {\fontsize{35}{38} \selectfont Bayesplot ::} {\fontsize{25}{28} \textbf{CHEAT SHEET}} }}
 \vspace{-0.25in}
   \begin{columns}
-    \begin{column}{0.03\paperwidth} % left margin space
+    \begin{column}{0.02\paperwidth} % left margin space
     \end{column}
 
     \begin{column}{0.3\paperwidth}
@@ -120,14 +120,12 @@ Diagnosing convergence with traceplots is simple.
 
 \end{knitrout}
 
-The pairs plot is helpful in determining if you have any highly correlated parameters, but necessitates us extracting the \texttt{stanfit} object from out \texttt{stanreg} model.
+The pairs plot is helpful in determining if you have any highly correlated parameters.  Note that different from above, we'll now extract each of the four chains posterior draws separately using \texttt{as.array}.
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{posterior_chains} \hlkwb{<-} \hlstd{rstan}\hlopt{::}\hlkwd{extract}\hlstd{(model}\hlopt{$}\hlstd{stanfit,}
-                                   \hlkwc{inc_warmup} \hlstd{=} \hlnum{TRUE}\hlstd{,}
-                                   \hlkwc{permuted} \hlstd{=} \hlnum{FALSE}\hlstd{)}
+\hlstd{posterior_chains} \hlkwb{<-} \hlkwd{as.array}\hlstd{(model)}
 \hlstd{pairs} \hlkwb{<-} \hlstd{posterior_chains} \hlopt{%>%}
     \hlkwd{mcmc_pairs}\hlstd{(}\hlkwc{pars} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"(Intercept)"}\hlstd{,} \hlstr{"wt"}\hlstd{,} \hlstr{"sigma"}\hlstd{))}
 \end{alltt}
@@ -153,10 +151,9 @@ Check how well the model covers your data with draws from the posterior predicti
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{model} \hlopt{%>%}
-    \hlkwd{posterior_predict}\hlstd{(}\hlkwc{draws} \hlstd{=} \hlnum{50}\hlstd{)} \hlopt{%>%}
-    \hlkwd{ppc_dens_overlay}\hlstd{(}\hlkwc{y} \hlstd{= model}\hlopt{$}\hlstd{y,}
-                     \hlkwc{yrep} \hlstd{= .)}
+\hlstd{ppd} \hlkwb{<-} \hlkwd{posterior_predict}\hlstd{(model,} \hlkwc{draws}\hlstd{=}\hlnum{500}\hlstd{)}
+\hlstd{ppd} \hlopt{%>%}
+    \hlkwd{ppc_dens_overlay}\hlstd{(}\hlkwc{y} \hlstd{= model}\hlopt{$}\hlstd{y,} \hlkwc{yrep} \hlstd{= .)}
 \end{alltt}
 \end{kframe}
 \includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-8-1} 
@@ -166,8 +163,7 @@ Check how well the model covers your data with draws from the posterior predicti
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{model} \hlopt{%>%}
-    \hlkwd{posterior_predict}\hlstd{(}\hlkwc{draws} \hlstd{=} \hlnum{500}\hlstd{)} \hlopt{%>%}
+\hlstd{ppd} \hlopt{%>%}
     \hlkwd{ppc_stat_grouped}\hlstd{(}\hlkwc{y} \hlstd{= mtcars}\hlopt{$}\hlstd{mpg,}  \hlkwc{group} \hlstd{= mtcars}\hlopt{$}\hlstd{am,}
                      \hlkwc{stat} \hlstd{=} \hlstr{"median"}\hlstd{,} \hlkwc{binwidth}\hlstd{=}\hlnum{0.5}\hlstd{)}
 \end{alltt}
@@ -192,12 +188,10 @@ Check how well the model covers your data with draws from the posterior predicti
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{fargs} \hlkwb{<-} \hlkwd{list}\hlstd{(}\hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,}
-                   \hlkwc{labeller} \hlstd{= label_parsed)}
+\hlstd{fargs} \hlkwb{<-} \hlkwd{list}\hlstd{(}\hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{labeller} \hlstd{= label_parsed)}
 \hlstd{pars} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"(Intercept)"}\hlstd{,} \hlstr{"sigma"}\hlstd{)}
 \hlkwd{mcmc_trace}\hlstd{(posterior_chains,} \hlkwc{pars} \hlstd{= pars,}
-           \hlkwc{n_warmup} \hlstd{=} \hlnum{300}\hlstd{,}
-           \hlkwc{facet_args} \hlstd{= fargs)}
+           \hlkwc{n_warmup} \hlstd{=} \hlnum{300}\hlstd{,} \hlkwc{facet_args} \hlstd{= fargs)}
 \end{alltt}
 \end{kframe}
 \includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-10-1} 
@@ -212,9 +206,7 @@ Check how well the model covers your data with draws from the posterior predicti
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlkwd{mcmc_scatter}\hlstd{(}
-  \hlkwd{as.matrix}\hlstd{(model}\hlopt{$}\hlstd{stanfit),}
-  \hlkwc{pars} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"wt"}\hlstd{,} \hlstr{"sigma"}\hlstd{),}
+\hlkwd{mcmc_scatter}\hlstd{(posterior,} \hlkwc{pars} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"wt"}\hlstd{,} \hlstr{"sigma"}\hlstd{),}
   \hlkwc{np} \hlstd{=} \hlkwd{nuts_params}\hlstd{(model}\hlopt{$}\hlstd{stanfit))}
 \end{alltt}
 \end{kframe}

@@ -25,7 +25,7 @@ posterior <- as.matrix(model)
   \frametitle{ \underline{ {\fontsize{35}{38} \selectfont Bayesplot ::} {\fontsize{25}{28} \textbf{CHEAT SHEET}} }}
 \vspace{-0.25in}
   \begin{columns}
-    \begin{column}{0.03\paperwidth} % left margin space
+    \begin{column}{0.02\paperwidth} % left margin space
     \end{column}
 
     \begin{column}{0.3\paperwidth}
@@ -61,12 +61,10 @@ Diagnosing convergence with traceplots is simple.
 mcmc_trace(posterior, pars=c("sigma", "wt"))
 @
 
-The pairs plot is helpful in determining if you have any highly correlated parameters, but necessitates us extracting the \texttt{stanfit} object from out \texttt{stanreg} model.
+The pairs plot is helpful in determining if you have any highly correlated parameters.  Note that different from above, we'll now extract each of the four chains posterior draws separately using \texttt{as.array}.
 
 <<fig.width=4, fig.height=3>>=
-posterior_chains <- rstan::extract(model$stanfit,
-                                   inc_warmup = TRUE,
-                                   permuted = FALSE)
+posterior_chains <- as.array(model)
 pairs <- posterior_chains %>%
     mcmc_pairs(pars = c("(Intercept)", "wt", "sigma"))
 @
@@ -85,16 +83,14 @@ pairs
 @
 
 Check how well the model covers your data with draws from the posterior predictive density.
-<<fig.width=3, fig.height=2>>=
-model %>%
-    posterior_predict(draws = 50) %>%
-    ppc_dens_overlay(y = model$y,
-                     yrep = .)
+<<fig.width=3, fig.height=2, cache=TRUE>>=
+ppd <- posterior_predict(model, draws=500)
+ppd %>%
+    ppc_dens_overlay(y = model$y, yrep = .)
 @
 
 <<fig.width=5, fig.height=2>>=
-model %>%
-    posterior_predict(draws = 500) %>%
+ppd %>%
     ppc_stat_grouped(y = mtcars$mpg,  group = mtcars$am,
                      stat = "median", binwidth=0.5)
 @
@@ -113,12 +109,10 @@ model %>%
 
 
 <<fig.width=5, fig.height=1.5>>=
-fargs <- list(ncol = 2,
-                   labeller = label_parsed)
+fargs <- list(ncol = 2, labeller = label_parsed)
 pars <- c("(Intercept)", "sigma")
 mcmc_trace(posterior_chains, pars = pars,
-           n_warmup = 300,
-           facet_args = fargs)
+           n_warmup = 300, facet_args = fargs)
 @
 
 
@@ -126,10 +120,8 @@ mcmc_trace(posterior_chains, pars = pars,
 \begin{block}{{\huge Diagnostics}}
   Bayesplot makes it easy to check diagnostics specific to the NUTS sampling method that \texttt{rstanarm} uses by default.
 
-<<fig.width=3, fig.height=1.5>>=
-mcmc_scatter(
-  as.matrix(model$stanfit),
-  pars = c("wt", "sigma"),
+<<fig.width=3, fig.height=2>>=
+mcmc_scatter(posterior, pars = c("wt", "sigma"),
   np = nuts_params(model$stanfit))
 @
 
