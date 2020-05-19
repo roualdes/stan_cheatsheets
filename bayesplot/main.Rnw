@@ -1,7 +1,7 @@
 \documentclass[final,9pt,fleqn]{beamer}
 \input{BeamOptions.tex}
 
-\setbeamertemplate{footline}{\hfill {\footnotesize \href{https://creativecommons.org/licenses/by-sa/4.0/}{CC BY-SA 4.0} $\circ$ Edward A. Roualdes $\circ$ \href{https://roualdes.us}{roualdes.us} $\circ$ version $0.0.1$ $\circ$ updated: \today} \hspace {0.1in} \vspace{0.1in}}
+\setbeamertemplate{footline}{\hfill {\footnotesize \href{https://creativecommons.org/licenses/by-sa/4.0/}{CC BY-SA 4.0} $\circ$ Edward A. Roualdes $\circ$ \href{https://roualdes.us}{roualdes.us} $\circ$ version $0.0.2$ $\circ$ updated: \today} \hspace {0.1in} \vspace{0.1in}}
 
 \begin{document}
 
@@ -11,8 +11,8 @@ options(replace.assign=TRUE, width=50, digits=4)
 opts_knit[["set"]](progress=FALSE)
 library("bayesplot")
 library("rstanarm")
+options(mc.cores = parallel::detectCores())
 library("ggplot2")
-library("rstan")
 library("dplyr")
 @
 
@@ -33,22 +33,21 @@ posterior <- as.matrix(model)
 <<eval=FALSE>>=
 library("bayesplot")
 library("rstanarm")
+options(mc.cores = parallel::detectCores())
 library("ggplot2")
-library("rstan")
 library("dplyr")
 @
 
-\begin{block}{{\huge rstanarm}}
+\begin{block}{{\huge Model Parameters}}
 
   To showcase \texttt{bayesplot}, we'll fit linear regression using \texttt{rstanarm::stan\_glm} and use this model throughout.
 <<eval=FALSE>>=
-model <- stan_glmer(mpg ~ .,
-                    data=mtcars, chains=4)
+model <- stan_glm(mpg ~ ., data=mtcars, chains=4)
 posterior <- as.matrix(model)
 @
 
 Chances are good you're most interested in the posterior distributions for select parameters.
-<<fig.width=3, fig.height=2>>=
+<<fig.width=4, fig.height=2.5, warning=FALSE>>=
 plot_title <- ggtitle("Posterior distributions",
                       "medians and 80% intervals")
 mcmc_areas(posterior,
@@ -61,12 +60,16 @@ Diagnosing convergence with traceplots is simple.
 mcmc_trace(posterior, pars=c("sigma", "wt"))
 @
 
-The pairs plot is helpful in determining if you have any highly correlated parameters.  Note that different from above, we'll now extract each of the four chains posterior draws separately using \texttt{as.array}.
+Using \texttt{as.array}, you can extract each of the four chain's
+posterior draws, different from above.  This allows you to see each
+chain's traceplot for selected parameters.
 
-<<fig.width=4, fig.height=3>>=
+<<>>=
 posterior_chains <- as.array(model)
-pairs <- posterior_chains %>%
-    mcmc_pairs(pars = c("(Intercept)", "wt", "sigma"))
+fargs <- list(ncol = 2, labeller = label_parsed)
+pars <- c("(Intercept)", "sigma")
+chains_trace <- mcmc_trace(posterior_chains, pars = pars,
+                           n_warmup = 300, facet_args = fargs)
 @
 \end{block}
 \end{column}
@@ -77,46 +80,39 @@ pairs <- posterior_chains %>%
 
 
 \begin{column}{0.3\paperwidth}
-
-<<echo=FALSE, fig.width=5, fig.height=3>>=
-pairs
+<<fig.width=5, fig.height=1.5>>=
+chains_trace
 @
 
+The pairs plot is helpful in determining if you have any highly correlated parameters.
+<<fig.width=5, fig.height=3>>=
+posterior_chains %>%
+  mcmc_pairs(pars = c("(Intercept)", "wt", "sigma"))
+@
+
+\begin{block}{{\huge Posterior Predictive Checks}}
 Check how well the model covers your data with draws from the posterior predictive density.
-<<fig.width=3, fig.height=2, cache=TRUE>>=
+<<fig.width=4, fig.height=2.5, cache=TRUE, fig.show="hold">>=
 ppd <- posterior_predict(model, draws=500)
 ppd %>%
-    ppc_dens_overlay(y = model$y, yrep = .)
+  ppc_intervals(y = mtcars$mpg, yrep = ., x = mtcars$wt, prob = 0.5) +
+  labs(x = "Weight (1000 lbs)", y = "MPG",
+    title = "50% posterior predictive intervals of MPG by weight")
 @
+\end{block}
+\end{column}
 
+
+\begin{column}{.03\paperwidth}
+\end{column}
+
+
+\begin{column}{0.3\paperwidth}
 <<fig.width=5, fig.height=2>>=
 ppd %>%
     ppc_stat_grouped(y = mtcars$mpg,  group = mtcars$am,
                      stat = "median", binwidth=0.5)
 @
-
-\begin{block}{{\huge RStan}}
-  Of course, \texttt{bayesplot} plays nicely with \texttt{RStan}, too.  We'll just pretend like we fit a model with \texttt{rstan::sampling} by extracting the \texttt{stanfit} object from out \texttt{stanreg} model.  This allows you to visualize individual chains.
-\end{block}
-\end{column}
-
-
-\begin{column}{.03\paperwidth}
-\end{column}
-
-
-\begin{column}{0.3\paperwidth}
-
-
-<<fig.width=5, fig.height=1.5>>=
-fargs <- list(ncol = 2, labeller = label_parsed)
-pars <- c("(Intercept)", "sigma")
-mcmc_trace(posterior_chains, pars = pars,
-           n_warmup = 300, facet_args = fargs)
-@
-
-
-
 \begin{block}{{\huge Diagnostics}}
   Bayesplot makes it easy to check diagnostics specific to the NUTS sampling method that \texttt{rstanarm} uses by default.
 

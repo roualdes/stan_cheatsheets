@@ -1,6 +1,6 @@
 \documentclass[final,9pt,fleqn]{beamer}\usepackage[]{graphicx}\usepackage[]{color}
-%% maxwidth is the original width if it is less than linewidth
-%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+% maxwidth is the original width if it is less than linewidth
+% otherwise use linewidth (to make sure the graphics do not exceed the margin)
 \makeatletter
 \def\maxwidth{ %
   \ifdim\Gin@nat@width>\linewidth
@@ -51,7 +51,7 @@
 \usepackage{alltt}
 \input{BeamOptions.tex}
 
-\setbeamertemplate{footline}{\hfill {\footnotesize \href{https://creativecommons.org/licenses/by-sa/4.0/}{CC BY-SA 4.0} $\circ$ Edward A. Roualdes $\circ$ \href{https://roualdes.us}{roualdes.us} $\circ$ version $0.0.1$ $\circ$ updated: \today} \hspace {0.1in} \vspace{0.1in}}
+\setbeamertemplate{footline}{\hfill {\footnotesize \href{https://creativecommons.org/licenses/by-sa/4.0/}{CC BY-SA 4.0} $\circ$ Edward A. Roualdes $\circ$ \href{https://roualdes.us}{roualdes.us} $\circ$ version $0.0.2$ $\circ$ updated: \today} \hspace {0.1in} \vspace{0.1in}}
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 
@@ -74,21 +74,20 @@
 \begin{alltt}
 \hlkwd{library}\hlstd{(}\hlstr{"bayesplot"}\hlstd{)}
 \hlkwd{library}\hlstd{(}\hlstr{"rstanarm"}\hlstd{)}
+\hlkwd{options}\hlstd{(}\hlkwc{mc.cores} \hlstd{= parallel}\hlopt{::}\hlkwd{detectCores}\hlstd{())}
 \hlkwd{library}\hlstd{(}\hlstr{"ggplot2"}\hlstd{)}
-\hlkwd{library}\hlstd{(}\hlstr{"rstan"}\hlstd{)}
 \hlkwd{library}\hlstd{(}\hlstr{"dplyr"}\hlstd{)}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
-\begin{block}{{\huge rstanarm}}
+\begin{block}{{\huge Model Parameters}}
 
   To showcase \texttt{bayesplot}, we'll fit linear regression using \texttt{rstanarm::stan\_glm} and use this model throughout.
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{model} \hlkwb{<-} \hlkwd{stan_glmer}\hlstd{(mpg} \hlopt{~} \hlstd{.,}
-                    \hlkwc{data}\hlstd{=mtcars,} \hlkwc{chains}\hlstd{=}\hlnum{4}\hlstd{)}
+\hlstd{model} \hlkwb{<-} \hlkwd{stan_glm}\hlstd{(mpg} \hlopt{~} \hlstd{.,} \hlkwc{data}\hlstd{=mtcars,} \hlkwc{chains}\hlstd{=}\hlnum{4}\hlstd{)}
 \hlstd{posterior} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(model)}
 \end{alltt}
 \end{kframe}
@@ -120,14 +119,18 @@ Diagnosing convergence with traceplots is simple.
 
 \end{knitrout}
 
-The pairs plot is helpful in determining if you have any highly correlated parameters.  Note that different from above, we'll now extract each of the four chains posterior draws separately using \texttt{as.array}.
+Using \texttt{as.array}, you can extract each of the four chain's
+posterior draws, different from above.  This allows you to see each
+chain's traceplot for selected parameters.
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlstd{posterior_chains} \hlkwb{<-} \hlkwd{as.array}\hlstd{(model)}
-\hlstd{pairs} \hlkwb{<-} \hlstd{posterior_chains} \hlopt{%>%}
-    \hlkwd{mcmc_pairs}\hlstd{(}\hlkwc{pars} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"(Intercept)"}\hlstd{,} \hlstr{"wt"}\hlstd{,} \hlstr{"sigma"}\hlstd{))}
+\hlstd{fargs} \hlkwb{<-} \hlkwd{list}\hlstd{(}\hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{labeller} \hlstd{= label_parsed)}
+\hlstd{pars} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"(Intercept)"}\hlstd{,} \hlstr{"sigma"}\hlstd{)}
+\hlstd{chains_trace} \hlkwb{<-} \hlkwd{mcmc_trace}\hlstd{(posterior_chains,} \hlkwc{pars} \hlstd{= pars,}
+                           \hlkwc{n_warmup} \hlstd{=} \hlnum{300}\hlstd{,} \hlkwc{facet_args} \hlstd{= fargs)}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
@@ -140,26 +143,52 @@ The pairs plot is helpful in determining if you have any highly correlated param
 
 
 \begin{column}{0.3\paperwidth}
-
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{chains_trace}
+\end{alltt}
+\end{kframe}
 \includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-7-1} 
 
 \end{knitrout}
 
-Check how well the model covers your data with draws from the posterior predictive density.
+The pairs plot is helpful in determining if you have any highly correlated parameters.
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{ppd} \hlkwb{<-} \hlkwd{posterior_predict}\hlstd{(model,} \hlkwc{draws}\hlstd{=}\hlnum{500}\hlstd{)}
-\hlstd{ppd} \hlopt{%>%}
-    \hlkwd{ppc_dens_overlay}\hlstd{(}\hlkwc{y} \hlstd{= model}\hlopt{$}\hlstd{y,} \hlkwc{yrep} \hlstd{= .)}
+\hlstd{posterior_chains} \hlopt{%>%}
+  \hlkwd{mcmc_pairs}\hlstd{(}\hlkwc{pars} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"(Intercept)"}\hlstd{,} \hlstr{"wt"}\hlstd{,} \hlstr{"sigma"}\hlstd{))}
 \end{alltt}
 \end{kframe}
 \includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-8-1} 
 
 \end{knitrout}
 
+\begin{block}{{\huge Posterior Predictive Checks}}
+Check how well the model covers your data with draws from the posterior predictive density.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{ppd} \hlkwb{<-} \hlkwd{posterior_predict}\hlstd{(model,} \hlkwc{draws}\hlstd{=}\hlnum{500}\hlstd{)}
+\hlstd{ppd} \hlopt{%>%}
+  \hlkwd{ppc_intervals}\hlstd{(}\hlkwc{y} \hlstd{= mtcars}\hlopt{$}\hlstd{mpg,} \hlkwc{yrep} \hlstd{= .,} \hlkwc{x} \hlstd{= mtcars}\hlopt{$}\hlstd{wt,} \hlkwc{prob} \hlstd{=} \hlnum{0.5}\hlstd{)} \hlopt{+}
+  \hlkwd{labs}\hlstd{(}\hlkwc{x} \hlstd{=} \hlstr{"Weight (1000 lbs)"}\hlstd{,} \hlkwc{y} \hlstd{=} \hlstr{"MPG"}\hlstd{,}
+    \hlkwc{title} \hlstd{=} \hlstr{"50% posterior predictive intervals of MPG by weight"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-9-1} 
+
+\end{knitrout}
+\end{block}
+\end{column}
+
+
+\begin{column}{.03\paperwidth}
+\end{column}
+
+
+\begin{column}{0.3\paperwidth}
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
@@ -168,38 +197,9 @@ Check how well the model covers your data with draws from the posterior predicti
                      \hlkwc{stat} \hlstd{=} \hlstr{"median"}\hlstd{,} \hlkwc{binwidth}\hlstd{=}\hlnum{0.5}\hlstd{)}
 \end{alltt}
 \end{kframe}
-\includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-9-1} 
-
-\end{knitrout}
-
-\begin{block}{{\huge RStan}}
-  Of course, \texttt{bayesplot} plays nicely with \texttt{RStan}, too.  We'll just pretend like we fit a model with \texttt{rstan::sampling} by extracting the \texttt{stanfit} object from out \texttt{stanreg} model.  This allows you to visualize individual chains.
-\end{block}
-\end{column}
-
-
-\begin{column}{.03\paperwidth}
-\end{column}
-
-
-\begin{column}{0.3\paperwidth}
-
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlstd{fargs} \hlkwb{<-} \hlkwd{list}\hlstd{(}\hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{labeller} \hlstd{= label_parsed)}
-\hlstd{pars} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"(Intercept)"}\hlstd{,} \hlstr{"sigma"}\hlstd{)}
-\hlkwd{mcmc_trace}\hlstd{(posterior_chains,} \hlkwc{pars} \hlstd{= pars,}
-           \hlkwc{n_warmup} \hlstd{=} \hlnum{300}\hlstd{,} \hlkwc{facet_args} \hlstd{= fargs)}
-\end{alltt}
-\end{kframe}
 \includegraphics[width=\maxwidth]{figures/main-unnamed-chunk-10-1} 
 
 \end{knitrout}
-
-
-
 \begin{block}{{\huge Diagnostics}}
   Bayesplot makes it easy to check diagnostics specific to the NUTS sampling method that \texttt{rstanarm} uses by default.
 
